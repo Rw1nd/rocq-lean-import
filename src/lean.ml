@@ -2147,7 +2147,14 @@ let rec do_input state ~from ~until ch =
       incr lcnt;
       do_input state ~from ~until ch
     | l ->
-      let state, oentry = do_line state l in
+      let state, oentry = 
+        match do_line state l with 
+        | s, o -> s, o
+        | exception TimedOut -> 
+          Feedback.msg_info Pp.(str "Timeout at line " ++ int !lcnt);
+          incr lcnt;
+          { state with skips = state.skips + 1 }, None 
+        in  
       (match (just_parse (), oentry) with
       | true, _ | false, None ->
         incr lcnt;
